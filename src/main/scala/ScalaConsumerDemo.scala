@@ -4,17 +4,10 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 
 import scala.collection.JavaConverters._
 
-object ScalaConsumerDemo extends App {
-
-  import java.util.Properties
+object ScalaConsumerDemo extends App with KafkaSetup {
 
   val TOPIC="customers"
 
-  val  props = new Properties()
-  props.put("bootstrap.servers", "localhost:9092")
-
-  props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
-  props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
   props.put("group.id", "customers")
 
   val consumer = new KafkaConsumer[String, String](props)

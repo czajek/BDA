@@ -37,8 +37,9 @@ object ElasticSearchDemo extends App with DbSetup {
 
     val productAsJson = write(p)
 
+
     elasticClient.execute {
-      indexInto("products" / p.categoryName.replace("&", "and")).doc(productAsJson).refresh(RefreshPolicy.IMMEDIATE)
+      indexInto("products" / p.categoryName.replace("&", "and").replace(" ", "")).doc(productAsJson.replace("&", "and").trim).refresh(RefreshPolicy.IMMEDIATE)
     }.await
 
   }

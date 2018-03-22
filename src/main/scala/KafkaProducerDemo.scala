@@ -1,3 +1,6 @@
+import java.util.Properties
+
+import org.apache.kafka.clients.producer.KafkaProducer
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.write
@@ -14,27 +17,22 @@ object Customer extends SQLSyntaxSupport[Customer] {
     rs.string("customer_password"), rs.string("customer_street"), rs.string("customer_city"), rs.string("customer_state"), rs.string("customer_zipcode"))
 }
 
-object KafkaProducerDemo extends App with DbSetup {
+object KafkaProducerDemo extends App with DbSetup with KafkaSetup {
 
   // ad-hoc session provider on the REPL
   implicit val session = AutoSession
+
+  val producer = new KafkaProducer[String, String](props)
 
   val customers: List[Customer] = sql"select * from customers".map(rs => Customer(rs)).list.apply()
 
   customers.foreach(c => sendCustomersToKafka(c))
 
+  producer.close()
+
   def sendCustomersToKafka(customer: Customer) = {
 
-    import java.util.Properties
-
     import org.apache.kafka.clients.producer._
-
-    val  props = new Properties()
-    props.put("bootstrap.servers", "localhost:9092")
-
-    props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
-    props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
-    val producer = new KafkaProducer[String, String](props)
 
     implicit val formats = Serialization.formats(NoTypeHints)
 
@@ -45,7 +43,7 @@ object KafkaProducerDemo extends App with DbSetup {
     val record = new ProducerRecord(TOPIC, customer.id.toString, customerAsJson)
     producer.send(record)
 
-    producer.close()
+
   }
 
 }
